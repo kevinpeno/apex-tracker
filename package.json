@@ -4,8 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-  	
+    "start": "node index.js"
   },
   "author": "",
-  "license": "Unlicensed"
+  "license": "Unlicensed",
+  "dependencies": {
+    "node-fetch": "^2.3.0"
+  }
 }
