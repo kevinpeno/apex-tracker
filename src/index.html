@@ -5,41 +5,51 @@
 </head>
 <body>
 	<script type="text/javascript">
+		const url = new URL(window.location.href)
+		const platform = url.searchParams.get("platform")
+		const profile = url.searchParams.get("profile")
+
+		const apiUri = platform && profile
+			? `platform=${platform}&profile=${profile}`
+			: ''
+
 		setInterval(() => {
-			fetch("/api")
+			fetch(`/api?${apiUri}`)
 				.then((r) => r.json())
-				.then(processData)
-		}, 3000)
+				.then((profiles) => {
+					profiles.map(processData)
+				})
+		}, 10000)
 
-		let oldData = {
-			name: "",
-			Kills: 0,
-			Damage: 0,
-			SeasonWins: 0
-		};
+		let state = new Map();
 
-		const processData = (data) => {
+		const processData = ({ platform, profile, data }) => {
 			const current = data.children[0]
 			const currentStats = getStats(current.stats)
 
 			const currentData = {
-				name: getLegendName(current),
-				Kills: currentStats.Kills,
-				Damage: currentStats.Damage,
-				SeasonWins: currentStats.SeasonWins,
+				Platform: platform,
+				Profile: profile,
+				Legend: getLegendName(current),
+				Kills: currentStats.Kills || currentStats.SeasonKills,
+				Damage: currentStats.Damage || currentStats.SeasonDamage,
+				Wins: currentStats.Wins || currentStats.SeasonWins,
 			}
 
+			const oldData = state.get(profile) || currentData
 			const difference = getDifference(oldData, currentData)
 
 			if(isDifference(difference)) {
 				console.log(
 					(new Date()).toLocaleString(),
-					currentData,
-					difference
+					Object.assign({
+						Profile: profile,
+						Legend: currentData.Legend,
+					}, difference)
 				)
 			}
 
-			oldData = currentData
+			state.set(profile, currentData)
 		}
 
 		const getLegendName = (legend) => (
@@ -56,17 +66,17 @@
 			}), {})
 
 		const getDifference = (prev, current) => ({
-			changedLegend: prev.name !== current.name,
+			changedLegend: prev.Legend !== current.Legend,
 			Kills: Math.max(0, current.Kills - prev.Kills),
 			Damage: Math.max(0, current.Damage - prev.Damage),
-			SeasonWins: Math.max(0, current.SeasonWins - prev.SeasonWins),
+			Wins: Math.max(0, current.Wins - prev.Wins),
 		})
 
 		const isDifference = (diff) => (
 			diff.changedLegend
 			|| diff.Kills > 0
 			|| diff.Damage > 0
-			|| diff.SeasonWins > 0
+			|| diff.Wins > 0
 		)
 
 		// const LegendSpecificBanner = {

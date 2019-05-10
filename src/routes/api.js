@@ -7,32 +7,23 @@ module.exports = (request, response) => {
 	const url = new URL(`https://localhost${request.url}`)
 	const platform = getPlatform(url.searchParams.get("platform"))
 	const profile = getProfile(url.searchParams.get("profile"))
+	const profiles = profile.split(',')
 
-	console.log(platform, profile)
+	console.log(platform, profiles)
 
-	if(platform && profile) {
-		const uri = `https://public-api.tracker.gg/apex/v1/standard/profile/${platform}/${profile}`
-		console.log(`Requesting: ${uri}`)
-
-		fetch(uri, {
-			headers: {
-				"TRN-Api-Key": getApiKey()
-			}
-		})
-		.then((apiResponse) => {
-			if(apiResponse.ok) {
-				return apiResponse.json()
-			}
-			else {
-				response.setHeader("Content-Type", apiResponse.headers.get('content-type'));
-				console.error(apiResponse.statusText)
-				error(request, response, apiResponse.statusText, 500)
-			}
-		})
-		.then(({data}) => {
+	if (platform && profiles.length) {
+		Promise.all(
+			profiles.map(getProfileDetails(platform))
+		).then((profiles) => {
 			response.setHeader("Content-Type", "application/json");
-			response.end(JSON.stringify(data))
+			response.end(JSON.stringify(profiles))
 		})
+		.catch((err => {
+			console.error(apiResponse.statusText)
+
+			response.setHeader("Content-Type", apiResponse.headers.get('content-type'));
+			error(request, response, apiResponse.statusText, 500)
+		}))
 	}
 	else {
 		console.log("errored")
@@ -66,4 +57,27 @@ const PlatformEnum = {
 	"psn": 2,
 	"pc": 5,
 	"origin": 5,
+}
+
+// API getter
+const getProfileDetails = (platform) => (profile) => {
+	const uri = `https://public-api.tracker.gg/apex/v1/standard/profile/${platform}/${profile}`
+	console.log(`Requesting: ${uri}`)
+
+	return fetch(uri, {
+		headers: {
+			"TRN-Api-Key": getApiKey()
+		}
+	}).then((apiResponse) => {
+		if(!apiResponse.ok) {
+			throw apiResponse.statusText
+		}
+
+		return apiResponse.json()
+	}).then((apiResponse) => {
+		return Object.assign({
+			profile,
+			platform,
+		}, apiResponse)
+	})
 }
