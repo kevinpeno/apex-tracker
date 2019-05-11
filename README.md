@@ -15,5 +15,13 @@ If you want to watch a different profile than the one set in the config visit:
 ```txt
 	http://localhost/?platform=<plaform>&profile=<profileName>[,<profileName>,<profileName>]
 ```
-	
+
+Possible `Platform` values (case insensitive):
+ - xbox
+ - playstation
+ - psn
+ - pc
+ - origin
+
 Example: `http://localhost/?platform=PC&profile=bbqsamich,webwookie`
+
