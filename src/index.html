@@ -40,7 +40,7 @@
 				.then((profiles) => {
 					profiles.map(processData)
 				})
-		}, 10000)
+		}, 15000)
 
 		let state = new Map();
 
@@ -49,10 +49,10 @@
 			const tds = clone.querySelectorAll("td");
 
 			// tds[0].textContent = stats.Profile
-			tds[1].textContent = stats.Legend
-			tds[2].textContent = stats.Kills
-			tds[3].textContent = stats.Damage
-			tds[4].textContent = stats.Wins > 0 ? "X" : ""
+			tds[0].textContent = stats.Legend
+			tds[1].textContent = stats.Kills
+			tds[2].textContent = stats.Damage
+			tds[3].textContent = stats.Wins > 0 ? "X" : ""
 
 			log.appendChild(clone)
 		}

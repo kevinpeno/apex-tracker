@@ -17,12 +17,11 @@ module.exports = (request, response) => {
 		).then((profiles) => {
 			response.setHeader("Content-Type", "application/json");
 			response.end(JSON.stringify(profiles))
-		})
-		.catch((err => {
-			console.error(apiResponse.statusText)
+		}, (err => {
+			console.error(err.statusText)
 
-			response.setHeader("Content-Type", apiResponse.headers.get('content-type'));
-			error(request, response, apiResponse.statusText, 500)
+			response.setHeader("Content-Type", err.headers.get('content-type'));
+			error(request, response, err.statusText, 500)
 		}))
 	}
 	else {
@@ -70,7 +69,7 @@ const getProfileDetails = (platform) => (profile) => {
 		}
 	}).then((apiResponse) => {
 		if(!apiResponse.ok) {
-			throw apiResponse.statusText
+			throw apiResponse
 		}
 
 		return apiResponse.json()
