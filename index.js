@@ -8,7 +8,7 @@ const error = require("./src/routes/error")
 
 const requestHandler = (request, response) => {
 	// / or /?profile...etc
-	if(/\/(\?(.+)?)/.test(request.url))
+	if(/\/(\?.+)?/.test(request.url))
 		index(request, response)
 	else if(/^\/api/.test(request.url))
 		api(request, response)

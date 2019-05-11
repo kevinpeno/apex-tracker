@@ -4,6 +4,27 @@
 	<title>APEX stream overlay</title>
 </head>
 <body>
+	<table>
+		<thead>
+			<tr>
+				<!-- <th>Profile</th> -->
+				<th>Legend</th>
+				<th>Kills</th>
+				<th>Damage</th>
+				<th>Win</th>
+			</tr>
+		</thead>
+		<tbody id="matches"></tbody>
+	</table>
+	<template id="match-log">
+		<tr>
+			<!-- <td></td> -->
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+	</template>
 	<script type="text/javascript">
 		const url = new URL(window.location.href)
 		const platform = url.searchParams.get("platform")
@@ -23,6 +44,23 @@
 
 		let state = new Map();
 
+		const buildMatchLog = (log, template) => (stats) => {
+			const clone = document.importNode(template.content, true);
+			const tds = clone.querySelectorAll("td");
+
+			// tds[0].textContent = stats.Profile
+			tds[1].textContent = stats.Legend
+			tds[2].textContent = stats.Kills
+			tds[3].textContent = stats.Damage
+			tds[4].textContent = stats.Wins > 0 ? "X" : ""
+
+			log.appendChild(clone)
+		}
+
+		const matchesTable = document.getElementById("matches")
+		const matchLogTemplate = document.getElementById("match-log")
+		const updateMatchLog = buildMatchLog(matchesTable, matchLogTemplate)
+
 		const processData = ({ platform, profile, data }) => {
 			const current = data.children[0]
 			const currentStats = getStats(current.stats)
@@ -40,13 +78,16 @@
 			const difference = getDifference(oldData, currentData)
 
 			if(isDifference(difference)) {
+				const matchLog = Object.assign({
+					Profile: profile,
+					Legend: currentData.Legend,
+				}, difference)
+
 				console.log(
 					(new Date()).toLocaleString(),
-					Object.assign({
-						Profile: profile,
-						Legend: currentData.Legend,
-					}, difference)
+					matchLog
 				)
+				updateMatchLog(matchLog)
 			}
 
 			state.set(profile, currentData)
@@ -67,9 +108,9 @@
 
 		const getDifference = (prev, current) => ({
 			changedLegend: prev.Legend !== current.Legend,
-			Kills: Math.max(0, current.Kills - prev.Kills),
-			Damage: Math.max(0, current.Damage - prev.Damage),
-			Wins: Math.max(0, current.Wins - prev.Wins),
+			Kills: deNaNify(Math.max(0, current.Kills - prev.Kills)),
+			Damage: deNaNify(Math.max(0, current.Damage - prev.Damage)),
+			Wins: deNaNify(Math.max(0, current.Wins - prev.Wins)),
 		})
 
 		const isDifference = (diff) => (
@@ -78,6 +119,8 @@
 			|| diff.Damage > 0
 			|| diff.Wins > 0
 		)
+
+		const deNaNify = (num) => isNaN(num) ? 0 : num
 
 		// const LegendSpecificBanner = {
 		// 	"LifeLine": {
