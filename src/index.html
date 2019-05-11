@@ -2,23 +2,60 @@
 <html>
 <head>
 	<title>APEX stream overlay</title>
+	<style>
+		body {
+				overflow: hidden;
+				margin: 0;
+				color: #f0f0f0;
+				font-size: 12.5vh;
+				background: black;
+		}
+
+		table {
+				width: 100vw;
+				border-collapse: separate;
+				border-spacing: 0 2vh;
+				padding: 0 2vw;
+		}
+
+		tbody tr {
+				background: #222;
+		}
+
+		th:first-child, td:first-child {
+				text-align: left;
+		}
+
+		th, td {
+				text-align: center;
+				padding: 1vh 2vw;
+		}
+
+		th {
+				font-size: 0.4em;
+				padding: 0vh 1vw;
+		}
+
+		td:last-child {
+			font-size: 0.4em
+		}
+	</style>
 </head>
 <body>
 	<table>
 		<thead>
 			<tr>
 				<!-- <th>Profile</th> -->
-				<th>Legend</th>
+				<th></th>
 				<th>Kills</th>
-				<th>Damage</th>
-				<th>Win</th>
+				<th>Dmg</th>
+				<th>W</th>
 			</tr>
 		</thead>
 		<tbody id="matches"></tbody>
 	</table>
 	<template id="match-log">
 		<tr>
-			<!-- <td></td> -->
 			<td></td>
 			<td></td>
 			<td></td>
@@ -26,6 +63,10 @@
 		</tr>
 	</template>
 	<script type="text/javascript">
+		const state = new Map();
+		const matchesTable = document.getElementById("matches")
+		const matchLogTemplate = document.getElementById("match-log")
+
 		const url = new URL(window.location.href)
 		const platform = url.searchParams.get("platform")
 		const profile = url.searchParams.get("profile")
@@ -34,15 +75,25 @@
 			? `platform=${platform}&profile=${profile}`
 			: ''
 
-		setInterval(() => {
+		const run = () => {
+			// Update data
 			fetch(`/api?${apiUri}`)
 				.then((r) => r.json())
 				.then((profiles) => {
 					profiles.map(processData)
 				})
-		}, 15000)
 
-		let state = new Map();
+			// trim excess to prevent memory leaks
+			const matchLogs = matchesTable.querySelectorAll("tr")
+
+			if( matchLogs.length > 5 ) {
+				matchLogs.forEach((matchLog, offset) => {
+					if( offset >= 5 ) {
+						matchesTable.removeChild(matchLog)
+					}
+				})
+			}
+		}
 
 		const buildMatchLog = (log, template) => (stats) => {
 			const clone = document.importNode(template.content, true);
@@ -52,13 +103,12 @@
 			tds[0].textContent = stats.Legend
 			tds[1].textContent = stats.Kills
 			tds[2].textContent = stats.Damage
-			tds[3].textContent = stats.Wins > 0 ? "X" : ""
+			tds[3].textContent = stats.Wins > 0 ? "YES" : "NO"
 
-			log.appendChild(clone)
+			// prepend to the list
+			log.insertBefore(clone, log.firstChild)
 		}
 
-		const matchesTable = document.getElementById("matches")
-		const matchLogTemplate = document.getElementById("match-log")
 		const updateMatchLog = buildMatchLog(matchesTable, matchLogTemplate)
 
 		const processData = ({ platform, profile, data }) => {
@@ -87,7 +137,10 @@
 					(new Date()).toLocaleString(),
 					matchLog
 				)
-				updateMatchLog(matchLog)
+
+				if(matchLog.changedLegend === false ) {
+					updateMatchLog(matchLog)
+				}
 			}
 
 			state.set(profile, currentData)
@@ -106,12 +159,14 @@
 				[current.key]: current.value
 			}), {})
 
-		const getDifference = (prev, current) => ({
-			changedLegend: prev.Legend !== current.Legend,
-			Kills: deNaNify(Math.max(0, current.Kills - prev.Kills)),
-			Damage: deNaNify(Math.max(0, current.Damage - prev.Damage)),
-			Wins: deNaNify(Math.max(0, current.Wins - prev.Wins)),
-		})
+		const getDifference = (prev, current) => prev.Legend !== current.Legend
+			? {changedLegend: true, Kills: 0, Damage: 0, Wins: 0 }
+			: {
+				changedLegend: false,
+				Kills: deNaNify(Math.max(0, current.Kills - prev.Kills)),
+				Damage: deNaNify(Math.max(0, current.Damage - prev.Damage)),
+				Wins: deNaNify(Math.max(0, current.Wins - prev.Wins)),
+			}
 
 		const isDifference = (diff) => (
 			diff.changedLegend
@@ -127,6 +182,9 @@
 		// 		"Specific1": "Droppod: Items for Squadmates"
 		// 	}
 		// }
+	</script>
+	<script>
+		setInterval(run, 30000)
 	</script>
 </body>
 </html>
