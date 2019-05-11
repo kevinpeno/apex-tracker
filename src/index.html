@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>APEX stream overlay</title>
+</head>
+<body>
+	<script type="text/javascript">
+		setInterval(() => {
+			fetch("/api")
+				.then((r) => r.json())
+				.then(processData)
+		}, 3000)
+
+		let oldData = {
+			name: "",
+			Kills: 0,
+			Damage: 0,
+			SeasonWins: 0
+		};
+
+		const processData = (data) => {
+			const current = data.children[0]
+			const currentStats = getStats(current.stats)
+
+			const currentData = {
+				name: getLegendName(current),
+				Kills: currentStats.Kills,
+				Damage: currentStats.Damage,
+				SeasonWins: currentStats.SeasonWins,
+			}
+
+			const difference = getDifference(oldData, currentData)
+
+			if(isDifference(difference)) {
+				console.log(
+					(new Date()).toLocaleString(),
+					currentData,
+					difference
+				)
+			}
+
+			oldData = currentData
+		}
+
+		const getLegendName = (legend) => (
+			legend.metadata.legend_name
+		)
+
+		const getStats = stats => stats
+			.map(stat => ({
+				key: stat.metadata.key,
+				value: stat.value
+			}))
+			.reduce((prev, current) => Object.assign(prev, {
+				[current.key]: current.value
+			}), {})
+
+		const getDifference = (prev, current) => ({
+			changedLegend: prev.name !== current.name,
+			Kills: Math.max(0, current.Kills - prev.Kills),
+			Damage: Math.max(0, current.Damage - prev.Damage),
+			SeasonWins: Math.max(0, current.SeasonWins - prev.SeasonWins),
+		})
+
+		const isDifference = (diff) => (
+			diff.changedLegend
+			|| diff.Kills > 0
+			|| diff.Damage > 0
+			|| diff.SeasonWins > 0
+		)
+
+		// const LegendSpecificBanner = {
+		// 	"LifeLine": {
+		// 		"Specific1": "Droppod: Items for Squadmates"
+		// 	}
+		// }
+	</script>
+</body>
+</html>
