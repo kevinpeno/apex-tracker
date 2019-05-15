@@ -29,7 +29,7 @@
 
 		th, td {
 				text-align: center;
-				padding: 1vh 2vw;
+				padding: 1.5vh 2vw;
 		}
 
 		th {
@@ -87,9 +87,9 @@
 			// trim excess to prevent memory leaks
 			const matchLogs = matchesTable.querySelectorAll("tr")
 
-			if( matchLogs.length > 5 ) {
+			if( matchLogs.length > 4 ) {
 				matchLogs.forEach((matchLog, offset) => {
-					if( offset >= 5 ) {
+					if( offset >= 4 ) {
 						matchesTable.removeChild(matchLog)
 					}
 				})
@@ -185,7 +185,7 @@
 		// }
 	</script>
 	<script>
-		setInterval(run, 10000)
+		setInterval(run, 60000)
 	</script>
 </body>
 </html>
