@@ -1,4 +1,9 @@
 Todo:
-	☐ *All in session* average kills per game, highest kills, wins, highest damage, games played
-	☐ styles for match history
-		☐ make styles settings somehow so I don't save only mine to git
+	- Move difference algorithm to API manager
+		- should work as currently works, but consolidates code to a better place
+	- Implement HTTP/2 for all endpoints
+	- Implement SSE for API endpoint
+	- Update UI to deal with SEE datagrams instead of API responses
+	- *All in session* average kills per game, highest kills, wins, highest damage, games played
+	- styles for match history
+		- make styles settings somehow so I don't save only mine to git
