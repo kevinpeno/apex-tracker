@@ -1,5 +1,6 @@
-Todo:
-  ☐ Move diff algorithm to API manager
+Apex Tracker:
+  ✔ Move diff algorithm to API manager
+  ☐ move the timeout from client to server
   ☐ Implement HTTP/2 for server
   ☐ Implement SSE for API endpoint
   ☐ Update UI to use SSE responses

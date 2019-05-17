@@ -64,7 +64,6 @@
 		</tr>
 	</template>
 	<script type="text/javascript">
-		const state = new Map();
 		const matchesTable = document.getElementById("matches")
 		const matchLogTemplate = document.getElementById("match-log")
 
@@ -80,9 +79,7 @@
 			// Update data
 			fetch(`/api?${apiUri}`)
 				.then((r) => r.json())
-				.then((profiles) => {
-					profiles.map(processData)
-				})
+				.then((profiles) => profiles.map(processData))
 
 			// trim excess to prevent memory leaks
 			const matchLogs = matchesTable.querySelectorAll("tr")
@@ -111,78 +108,26 @@
 		}
 
 		const updateMatchLog = buildMatchLog(matchesTable, matchLogTemplate)
-
-		const processData = ({ platform, profile, data }) => {
-			const current = data.children[0]
-			const currentStats = getStats(current.stats)
-
-			const currentData = {
-				Platform: platform,
-				Profile: profile,
-				Legend: getLegendName(current),
-				Kills: currentStats.Kills || currentStats.SeasonKills,
-				Damage: currentStats.Damage || currentStats.SeasonDamage,
-				Wins: currentStats.Wins || currentStats.SeasonWins,
-			}
-
-			const oldData = state.get(profile) || currentData
-			const difference = getDifference(oldData, currentData)
-
-			if(isDifference(difference)) {
-				const matchLog = Object.assign({
-					Profile: profile,
-					Legend: currentData.Legend,
-				}, difference)
-
-				console.log(
-					(new Date()).toLocaleString(),
-					matchLog
-				)
-
-				if(matchLog.changedLegend === false ) {
-					updateMatchLog(matchLog)
-				}
-			}
-
-			state.set(profile, currentData)
-		}
-
-		const getLegendName = (legend) => (
-			legend.metadata.legend_name
-		)
-
-		const getStats = stats => stats
-			.map(stat => ({
-				key: stat.metadata.key,
-				value: stat.value
-			}))
-			.reduce((prev, current) => Object.assign(prev, {
-				[current.key]: current.value
-			}), {})
-
-		const getDifference = (prev, current) => prev.Legend !== current.Legend
-			? {changedLegend: true, Kills: 0, Damage: 0, Wins: 0 }
-			: {
-				changedLegend: false,
-				Kills: deNaNify(Math.max(0, current.Kills - prev.Kills)),
-				Damage: deNaNify(Math.max(0, current.Damage - prev.Damage)),
-				Wins: deNaNify(Math.max(0, current.Wins - prev.Wins)),
-			}
-
-		const isDifference = (diff) => (
-			diff.changedLegend
-			|| diff.Kills > 0
+		const isMatchLog = (diff) => (
+			diff.Kills > 0
 			|| diff.Damage > 0
 			|| diff.Wins > 0
 		)
 
-		const deNaNify = (num) => isNaN(num) ? 0 : num
+		const processData = ({ Profile, Legend, data }) => {
+			if(data) {
+				console.log(
+					(new Date()).toLocaleString(),
+					data
+				)
 
-		// const LegendSpecificBanner = {
-		// 	"LifeLine": {
-		// 		"Specific1": "Droppod: Items for Squadmates"
-		// 	}
-		// }
+				if(isMatchLog(data)) {
+					updateMatchLog(Object.assign({
+						Legend
+					}, data))
+				}
+			}
+		}
 	</script>
 	<script>
 		setInterval(run, 60000)
