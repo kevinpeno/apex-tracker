@@ -7,6 +7,7 @@ trim_trailing_whitespace = true
 insert_final_newline = true
 indent_style = tab
 
-[*.{json,yml}]
+# Markdown related files and other strict sources
+[{TODO,*.{json,yml,md}}]
 indent_style = space
 indent_size = 2
