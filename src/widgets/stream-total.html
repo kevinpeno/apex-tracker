@@ -83,7 +83,7 @@
 			killsEl.textContent = kills
 			damageEl.textContent = damage
 			winsEl.textContent = wins
-			kdrEl.textContent = kdr
+			kdrEl.textContent = kdr.toFixed(2)
 			requestAnimationFrame(updateOverview)
 		}
 		requestAnimationFrame(updateOverview)
@@ -122,7 +122,7 @@
 						// prevent div by zero on first run
 						const hackedLosses = losses > 0 ? losses : 1
 
-						kdr = (kills / hackedLosses ).toFixed(2)
+						kdr = kills / hackedLosses
 					break;
 				}
 
