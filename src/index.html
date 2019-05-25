@@ -66,21 +66,10 @@
 	<script type="text/javascript">
 		const matchesTable = document.getElementById("matches")
 		const matchLogTemplate = document.getElementById("match-log")
-
-		const url = new URL(window.location.href)
-		const platform = url.searchParams.get("platform")
-		const profile = url.searchParams.get("profile")
-
-		const apiUri = platform && profile
-			? `platform=${platform}&profile=${profile}`
-			: ''
+		let currentLegend = null
+		let lastMessageId = 0
 
 		const run = () => {
-			// Update data
-			fetch(`/api?${apiUri}`)
-				.then((r) => r.json())
-				.then((profiles) => profiles.map(processData))
-
 			// trim excess to prevent memory leaks
 			const matchLogs = matchesTable.querySelectorAll("tr")
 
@@ -91,46 +80,50 @@
 					}
 				})
 			}
+
+			// Request messages
+			fetch(`/api?since=${lastMessageId}`)
+				.then((r) => r.json())
+				.then((messages) => {
+					setTimeout(run, 500)
+					messages.forEach(processData)
+				})
 		}
 
-		const buildMatchLog = (log, template) => (stats) => {
-			const clone = document.importNode(template.content, true);
+		run()
+
+		const addMatchLog = (stats) => {
+			const clone = document.importNode(matchLogTemplate.content, true);
 			const tds = clone.querySelectorAll("td");
 
-			// tds[0].textContent = stats.Profile
-			tds[0].textContent = stats.Legend
-			tds[1].textContent = stats.Kills
-			tds[2].textContent = stats.Damage
-			tds[3].textContent = stats.Wins > 0 ? "YES" : "NO"
+			tds[0].textContent = currentLegend
+			tds[1].textContent = stats.kills
+			tds[2].textContent = stats.damage
+			tds[3].textContent = stats.wins > 0 ? "YES" : "NO"
 
 			// prepend to the list
-			log.insertBefore(clone, log.firstChild)
+			matchesTable.insertBefore(clone, matchesTable.firstChild)
 		}
 
-		const updateMatchLog = buildMatchLog(matchesTable, matchLogTemplate)
-		const isMatchLog = (diff) => (
-			diff.Kills > 0
-			|| diff.Damage > 0
-			|| diff.Wins > 0
-		)
-
-		const processData = ({ Profile, Legend, data }) => {
-			if(data) {
+		const processData = (message) => {
+			if(message) {
 				console.log(
 					(new Date()).toLocaleString(),
-					data
+					message
 				)
 
-				if(isMatchLog(data)) {
-					updateMatchLog(Object.assign({
-						Legend
-					}, data))
+				switch(message.type) {
+					case "ChangedLegend":
+						currentLegend = message.data
+					break;
+					case "MatchResults":
+						addMatchLog(message.data)
+					break;
 				}
+
+				lastMessageId = message.id
 			}
 		}
-	</script>
-	<script>
-		setInterval(run, 3000)
 	</script>
 </body>
 </html>

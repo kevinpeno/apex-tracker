@@ -4,36 +4,30 @@ const { Headers,
 } = fetch
 
 const getConfig = require("./config-manager")
-const { getConfigOr } = getConfig
 
-const PlatformEnum = {
+const Platforms = {
 	"xbox": 1,
 	"playstation": 2,
 	"psn": 2,
 	"pc": 5,
 	"origin": 5,
 }
-const getPlatform = getConfigOr("TRN-Platform", (value) => PlatformEnum[value.toLowerCase()])
 
-module.exports = (platform) => (profile) => {
-	const realPlatform = getPlatform(platform)
-	const uri = `https://public-api.tracker.gg/apex/v1/standard/profile/${realPlatform}/${profile}`
+const platform = getConfig("TRN-Platform", (value) => Platforms[value.toLowerCase()])
+const profile = getConfig("TRN-Profile")
+if( !platform ) {
+	throw "platform not set in config"
+}
 
-	if(!realPlatform) {
-		return Promise.reject(new Response(null, {
-			status: 400,
-			statusText: `Platform not set`,
-			headers: new Headers({
-				"content-type": "text/plain"
-			})
-		}))
+const uri = `https://public-api.tracker.gg/apex/v1/standard/profile/${platform}/${profile}`
+const options = {
+	headers: {
+		"TRN-Api-Key": getConfig("TRN-Api-Key")
 	}
-	else {
-		return fetch(uri, {
-			headers: {
-				"TRN-Api-Key": getConfig("TRN-Api-Key")
-			}
-		})
+}
+
+module.exports = () =>
+	fetch(uri, options)
 		.then((apiResponse) => {
 			if(!apiResponse.ok) {
 				if(apiResponse.status === 404) {
@@ -52,11 +46,9 @@ module.exports = (platform) => (profile) => {
 
 			return apiResponse.json()
 		})
-		.then((apiResponse) => {
-			return Object.assign({
+		.then((apiResponse) => Object.assign({
 				profile,
 				platform,
-			}, apiResponse)
-		})
-	}
-}
+			},
+			apiResponse
+		))

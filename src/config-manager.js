@@ -9,7 +9,3 @@ const returnSetIfSet = (a) => ( //
 )
 
 module.exports = (thingName, callback=identity) => callback(config[thingName])
-
-module.exports.getConfigOr = (thingName, callback=identity) => (requestedValue) => callback(
-	returnSetIfSet(requestedValue) || returnSetIfSet(config[thingName])
-)

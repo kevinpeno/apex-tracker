@@ -1,43 +1,58 @@
 const getProfileDetails = require("./tracker.gg")
-const state = new Map();
 
-module.exports = (platform, profiles) => Promise.all(
-	profiles.map(getProfileDetails(platform))
-)
-.then((profiles) =>
-	profiles.map(processData)
-)
+module.exports = () =>
+	getProfileDetails()
+		.then(processData)
 
+/* Queue Message format:
+{
+	id:   number(1...Infinity),
+	type: "ChangedLegend"
+	data: "legendID"
+}
+
+{
+	id:   number(1...Infinity),
+	type: "MatchResults"
+	data: {
+		kills:  number(0...Infinity),
+		damage: number(0...Infinity),
+		wins:   number(0...Infinity),
+	}
+}
+*/
+
+let state = {};
 const processData = ({ platform, profile, data }) => {
 	const current = data.children[0]
 	const currentStats = getStats(current.stats)
 
 	const currentData = {
-		Platform: platform,
-		Profile: profile,
-		Legend: getLegendName(current),
-		Kills: currentStats.Kills || currentStats.SeasonKills,
-		Damage: currentStats.Damage || currentStats.SeasonDamage,
-		Wins: currentStats.Wins || currentStats.SeasonWins,
+		legend: getLegendName(current),
+		kills: currentStats.Kills || currentStats.SeasonKills || 0,
+		damage: currentStats.Damage || currentStats.SeasonDamage || 0,
+		wins: currentStats.Wins || currentStats.SeasonWins || 0,
 	}
 
-	const oldData = state.get(profile) || currentData
-	state.set(profile, currentData)
+	const diff = getDifference(state, currentData)
+	state = currentData
 
-	const difference = getDifference(oldData, currentData)
-
-	const matchLog = {
-		Profile: profile,
-		Legend: currentData.Legend
+	if(diff.changedLegend) {
+		return {
+			type: "ChangedLegend",
+			data: currentData.legend
+		}
 	}
-
-	if(isDifference(difference)) {
-		return Object.assign({}, matchLog, {
-			data: difference
-		})
+	else if(Math.max(diff.kills, diff.wins, diff.damage) > 0) {
+		return {
+			type: "MatchResults",
+			data: {
+				kills: diff.kills,
+				damage: diff.damage,
+				wins: diff.wins,
+			}
+		}
 	}
-
-	return matchLog
 }
 
 const getLegendName = (legend) => (
@@ -53,20 +68,18 @@ const getStats = stats => stats
 		[current.key]: current.value
 	}), {})
 
-const getDifference = (prev, current) => prev.Legend !== current.Legend
-	? {changedLegend: true, Kills: 0, Damage: 0, Wins: 0 }
+const getDifference = (prev, current) => prev.legend !== current.legend
+	? {changedLegend: true, kills: 0, damage: 0, wins: 0 }
 	: {
 		changedLegend: false,
-		Kills: deNaNify(Math.max(0, current.Kills - prev.Kills)),
-		Damage: deNaNify(Math.max(0, current.Damage - prev.Damage)),
-		Wins: deNaNify(Math.max(0, current.Wins - prev.Wins)),
+		kills: Math.max(0, current.kills - prev.kills),
+		damage: Math.max(0, current.damage - prev.damage),
+		wins: Math.max(0, current.wins - prev.wins),
 	}
 
 const isDifference = (diff) => (
 	diff.changedLegend
-	|| diff.Kills > 0
-	|| diff.Damage > 0
-	|| diff.Wins > 0
+	|| diff.kills > 0
+	|| diff.damage > 0
+	|| diff.wins > 0
 )
-
-const deNaNify = (num) => isNaN(num) ? 0 : num
