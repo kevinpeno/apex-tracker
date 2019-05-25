@@ -62,16 +62,18 @@ checkForUpdates()
 const http = require("http")
 const port = 3000
 
-const index = require("./src/routes/index")
+const html = require("./src/routes/html")
 const api = require("./src/routes/api")
 const error = require("./src/routes/error")
 
 http
 	.createServer((request, response) => {
 		// / or /?profile...etc
-		if(/^\/(\?.+)?$/.test(request.url))
-			index(request, response)
-		else if(/^\/api/.test(request.url))
+		if(/^\/match-log$/.test(request.url))
+			html('match-log', response)
+		else if(/^\/stream-total$/.test(request.url))
+			html('stream-total', response)
+		else if(/^\/api\??.*/.test(request.url))
 			api(request, response, queue)
 		else
 			error(request, response)

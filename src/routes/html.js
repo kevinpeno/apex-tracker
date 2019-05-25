@@ -1,7 +1,7 @@
 const fs = require("fs")
 
-module.exports = (request, response) => {
-	fs.readFile("src/index.html", function(error, content) {
+module.exports = (widget, response) => {
+	fs.readFile(`src/widgets/${widget}.html`, function(error, content) {
 		if(error) {
 			console.log(error)
 		} else {
