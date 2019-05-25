@@ -1,5 +1,8 @@
 Apex Tracker:
-  ✔ Move diff algorithm to API manager
   ✔ move the timeout from client to server
   ☐ *All in session* avg kill/game, highest kills, wins, highest dmg, # played
+  ☐ Some kinda hot/not hot meter based on averages of gameplay over time
+  ☐ Implement HTTP/2 for server
+  ☐ Implement SSE for API endpoint
+  ☐ Update UI to use SSE responses
   ☐ make styles settings somehow so I don't save only mine to git
