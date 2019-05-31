@@ -29,9 +29,12 @@ const processData = ({ platform, profile, data }) => {
 
 	const currentData = {
 		legend: getLegendName(current),
-		kills: currentStats.Kills || currentStats.SeasonKills || 0,
-		damage: currentStats.Damage || currentStats.SeasonDamage || 0,
-		wins: currentStats.Wins || currentStats.SeasonWins || 0,
+		kills: currentStats.Kills || 0,
+		damage: currentStats.Damage || 0,
+		wins: currentStats.Wins || 0,
+		seasonKills: currentStats.SeasonKills || 0,
+		seasonDamage: currentStats.SeasonDamage || 0,
+		seasonWins: currentStats.SeasonWins || 0,
 	}
 
 	const diff = getDifference(state, currentData)
@@ -68,18 +71,13 @@ const getStats = stats => stats
 		[current.key]: current.value
 	}), {})
 
-const getDifference = (prev, current) => prev.legend !== current.legend
-	? {changedLegend: true, kills: 0, damage: 0, wins: 0 }
-	: {
-		changedLegend: false,
-		kills: Math.max(0, current.kills - prev.kills),
-		damage: Math.max(0, current.damage - prev.damage),
-		wins: Math.max(0, current.wins - prev.wins),
-	}
-
-const isDifference = (diff) => (
-	diff.changedLegend
-	|| diff.kills > 0
-	|| diff.damage > 0
-	|| diff.wins > 0
+const getDifference = (prev, current) => (
+	prev.legend !== current.legend
+		? {changedLegend: true, kills: 0, damage: 0, wins: 0 }
+		: {
+			changedLegend: false,
+			kills: Math.max(0, current.kills - prev.kills, current.SeasonKills - prev.SeasonKills),
+			damage: Math.max(0, current.damage - prev.damage, current.SeasonDamage - prev.SeasonDamage),
+			wins: Math.max(0, current.wins - prev.wins, current.SeasonWins - prev.SeasonWins),
+		}
 )

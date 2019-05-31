@@ -4,7 +4,11 @@
 */
 const getConfig = require("./src/config-manager")
 const getProfileRequest = require("./src/process-tracker-api")
-const queue = []
+const queue = [{
+	id: 1,
+	type: "ServerReset"
+}]
+console.log("Message received", queue[0])
 
 /* Queue Message format:
 {
