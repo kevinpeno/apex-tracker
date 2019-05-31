@@ -24,6 +24,7 @@ module.exports = () =>
 
 let state = {};
 const processData = ({ platform, profile, data }) => {
+
 	const current = data.children[0]
 	const currentStats = getStats(current.stats)
 
@@ -37,7 +38,18 @@ const processData = ({ platform, profile, data }) => {
 		seasonWins: currentStats.SeasonWins || 0,
 	}
 
-	const diff = getDifference(state, currentData)
+	const diff = getDifference({
+		legend: state.legend,
+		kills: state.kills || state.seasonKills,
+		damage: state.damage || state.seasonDamage,
+		wins: state.wins || state.seasonWins,
+	}, {
+		legend: currentData.legend,
+		kills: currentData.kills || currentData.seasonKills,
+		damage: currentData.damage || currentData.seasonDamage,
+		wins: currentData.wins || currentData.seasonWins,
+	})
+
 	state = currentData
 
 	if(diff.changedLegend) {
@@ -76,8 +88,8 @@ const getDifference = (prev, current) => (
 		? {changedLegend: true, kills: 0, damage: 0, wins: 0 }
 		: {
 			changedLegend: false,
-			kills: Math.max(0, current.kills - prev.kills, current.SeasonKills - prev.SeasonKills),
-			damage: Math.max(0, current.damage - prev.damage, current.SeasonDamage - prev.SeasonDamage),
-			wins: Math.max(0, current.wins - prev.wins, current.SeasonWins - prev.SeasonWins),
+			kills: Math.max(0, current.kills - prev.kills),
+			damage: Math.max(0, current.damage - prev.damage),
+			wins: Math.max(0, current.wins - prev.wins),
 		}
 )

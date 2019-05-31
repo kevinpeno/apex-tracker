@@ -93,7 +93,7 @@
 			fetch(`/api?since=${lastMessageId}`)
 				.then((r) => r.json())
 				.then((messages) => {
-					setTimeout(run, 500)
+					setTimeout(run, 2000)
 					messages.forEach(processData)
 				})
 		}
