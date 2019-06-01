@@ -25,11 +25,11 @@ module.exports = () =>
 let state = {};
 const processData = ({ platform, profile, data }) => {
 
-	const current = data.children[0]
-	const currentStats = getStats(current.stats)
+	const currentData = data.children[0]
+	const currentStats = getStats(currentData.stats)
 
-	const currentData = {
-		legend: getLegendName(current),
+	const incomingState = {
+		legend: getLegendName(currentData),
 		kills: currentStats.Kills || 0,
 		damage: currentStats.Damage || 0,
 		wins: currentStats.Wins || 0,
@@ -38,40 +38,36 @@ const processData = ({ platform, profile, data }) => {
 		seasonWins: currentStats.SeasonWins || 0,
 	}
 
-	const diff = getDifference({
-		legend: state.legend,
-		kills: state.kills || state.seasonKills,
-		damage: state.damage || state.seasonDamage,
-		wins: state.wins || state.seasonWins,
-	}, {
-		legend: currentData.legend,
-		kills: currentData.kills || currentData.seasonKills,
-		damage: currentData.damage || currentData.seasonDamage,
-		wins: currentData.wins || currentData.seasonWins,
-	})
+	console.table(incomingState)
 
-	state = currentData
-
-	if(diff.changedLegend) {
-		return {
+	let message = null
+	if(state.legend !== incomingState.legend) {
+		message =  {
 			type: "ChangedLegend",
-			data: currentData.legend
+			data: incomingState.legend
 		}
 	}
-	else if(Math.max(diff.kills, diff.wins, diff.damage) > 0) {
-		return {
-			type: "MatchResults",
-			data: {
-				kills: diff.kills,
-				damage: diff.damage,
-				wins: diff.wins,
+	else {
+		const diff = getMatchLog(state, incomingState)
+
+		if(Math.max.apply(null, Object.values(diff)) > 0) {
+			message = {
+				type: "MatchResults",
+				data: {
+					kills: Math.max(diff.kills, diff.seasonKills),
+					damage: Math.max(diff.damage, diff.seasonDamage),
+					wins: Math.max(diff.wins, diff.seasonWins),
+				}
 			}
 		}
 	}
+
+	state = incomingState
+	return message
 }
 
-const getLegendName = (legend) => (
-	legend.metadata.legend_name
+const getLegendName = (rawData) => (
+	rawData.metadata.legend_name
 )
 
 const getStats = stats => stats
@@ -83,13 +79,25 @@ const getStats = stats => stats
 		[current.key]: current.value
 	}), {})
 
-const getDifference = (prev, current) => (
-	prev.legend !== current.legend
-		? {changedLegend: true, kills: 0, damage: 0, wins: 0 }
-		: {
-			changedLegend: false,
-			kills: Math.max(0, current.kills - prev.kills),
-			damage: Math.max(0, current.damage - prev.damage),
-			wins: Math.max(0, current.wins - prev.wins),
-		}
-)
+const MatchTrackingKeys = [
+	"kills",
+	"seasonKills",
+	"damage",
+	"seasonDamage",
+	"wins",
+	"seasonWins",
+]
+const getMatchLog = (prev, current) => {
+	const diff = MatchTrackingKeys.reduce((obj, k) => ({
+		...obj,
+		[k]: Math.max(0, current[k] - prev[k])
+	}), {})
+
+	console.table({
+		previous: prev,
+		current: current,
+		diff
+	})
+
+	return diff
+}

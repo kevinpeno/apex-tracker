@@ -8,8 +8,8 @@ const queue = [{
 	id: 1,
 	type: "ServerReset"
 }]
-console.log("Message received", queue[0])
-
+console.table(queue[0])
+console.log("==========Message end============")
 /* Queue Message format:
 {
 	id:   number(1...Infinity),
@@ -32,16 +32,17 @@ const refreshRate = Math.max(3500, getConfig("TRN-Update-Interval"))
 const checkForUpdates = () =>
 	getProfileRequest()
 		.then((message) => {
-			if( message ) {
+			if( message !== null ) {
 				const log = Object.assign({
 					id: queue.length + 1
 				}, message)
 
-				console.log("Message received", log)
+				console.table(log)
+				console.log("==========Message end============")
 				queue.push(log)
 			}
 			else {
-				console.log("API update complete, no changes detected")
+				console.log("==========API update complete, no changes detected==========")
 			}
 
 			setTimeout(checkForUpdates, refreshRate)
@@ -55,6 +56,7 @@ const checkForUpdates = () =>
 				break;
 				default:
 					setTimeout(checkForUpdates, refreshRate)
+					throw err
 				break;
 			}
 		})

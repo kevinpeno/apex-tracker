@@ -60,14 +60,14 @@
 <body>
 	<div id="stats">Overall Stats</div>
 	<div id="overview">
-		<div><div>Kills: <span id="kills">0</span></div></div>
-		<div><div>Damage: <span id="damage">0</span></div></div>
-		<div><div>Wins: <span id="wins">0</span></div></div>
 		<div><div>KDR: <span id="kdr">0</span></div></div>
+		<div><div>ADR: <span id="damage">0</span></div></div>
+		<div><div>Kills: <span id="kills">0</span></div></div>
+		<div><div>Wins: <span id="wins">0</span></div></div>
 	</div>
 	<script type="text/javascript">
 		const killsEl = document.getElementById("kills")
-		const damageEl = document.getElementById("damage")
+		const adrEl = document.getElementById("damage")
 		const winsEl = document.getElementById("wins")
 		const kdrEl = document.getElementById("kdr")
 
@@ -76,12 +76,13 @@
 		let kills = 0
 		let damage = 0
 		let wins = 0
-		let losses = 0
-		let kdr = 0.0
+		let totalMatches = 0
+		let adr = 0.00
+		let kdr = 0.00
 
 		const updateOverview = () => {
 			killsEl.textContent = kills
-			damageEl.textContent = damage
+			adrEl.textContent = adr.toFixed(2)
 			winsEl.textContent = wins
 			kdrEl.textContent = kdr.toFixed(2)
 			requestAnimationFrame(updateOverview)
@@ -101,11 +102,6 @@
 
 		const processData = (message) => {
 			if(message) {
-				console.log(
-					(new Date()).toLocaleString(),
-					message
-				)
-
 				switch(message.type) {
 					case "ChangedLegend":
 						currentLegend = message.data
@@ -114,30 +110,15 @@
 						kills += message.data.kills
 						damage += message.data.damage
 						wins += message.data.wins
+						totalMatches++
 
-						// update losses
-						if( message.data.wins === 0 )
-							losses++
-
-						// prevent div by zero on first run
-						const hackedLosses = losses > 0 ? losses : 1
-
-						kdr = kills / hackedLosses
+						kdr = kills / Math.max(totalMatches - wins, 1)
+						adr = damage / totalMatches
 					break;
 				}
 
 				lastMessageId = message.id
 			}
-
-			console.log(
-				lastMessageId,
-				currentLegend,
-				kills,
-				damage,
-				wins,
-				losses,
-				kdr
-			)
 		}
 	</script>
 </body>
